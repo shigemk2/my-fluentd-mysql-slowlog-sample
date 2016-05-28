@@ -1,16 +1,12 @@
-FROM gliderlabs/alpine:3.3
-MAINTAINER i.am.shige@gmail.com
+FROM fluent/fluentd:latest
+MAINTAINER shigemk2 <i.am.shige@gmail.com>
+USER root
+WORKDIR /home/fluent
+ENV PATH /home/fluent/.gem/ruby/2.2.0/bin:$PATH
+RUN apk --update add ca-certificates ruby ruby-dev ruby-irb build-base jemalloc-dev mariadb-dev
+RUN gem install fluent-plugin-elasticsearch && \
+    gem install fluent-plugin-mysql-replicator
 
-ENV FLUENTD_VERSION 0.14.0.pre.1
-
-RUN apk-install ca-certificates ruby ruby-dev ruby-irb build-base jemalloc-dev mariadb-dev && \
-  echo 'gem: --no-document' >> /etc/gemrc && \
-  gem update --system && \
-  gem install fluentd -v $FLUENTD_VERSION && \
-  gem install fluent-plugin-elasticsearch && \
-  gem install fluent-plugin-rds-log && \
-  fluentd --setup /etc/fluent
-
-ENV JEMALLOC_PATH /usr/lib/libjemalloc.so
-COPY conf/fluentd.conf /etc/fluent/fluentd.conf
-ENTRYPOINT ["/usr/bin/fluentd", "-c", "/etc/fluent/fluentd.conf"]
+COPY fluent.conf /fluent/etc/fluent.conf
+EXPOSE 24224
+CMD fluentd -c /fluentd/etc/$FLUENTD_CONF -p /fluentd/plugins $FLUENTD_OPT
